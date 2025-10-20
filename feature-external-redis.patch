@@ -1,0 +1,45 @@
+From: Opt6
+Subject: [PATCH] Add external Redis/Dragonfly support via CACHE_URL, CACHE_PORT, CACHE_DB
+
+---
+ src/main/java/com/github/mdeluise/plantit/ApplicationConfig.java | 63 ++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
+
+diff --git a/src/main/java/com/github/mdeluise/plantit/ApplicationConfig.java b/src/main/java/com/github/mdeluise/plantit/ApplicationConfig.java
+index 0000000..0000000 100644
+--- a/src/main/java/com/github/mdeluise/plant-it/ApplicationConfig.java
++++ b/src/main/java/com/github/mdeluise/plant-it/ApplicationConfig.java
+@@
++    @Value("${CACHE_URL:}")
++    private String cacheUrl;
++
++    @Value("${CACHE_PORT:6379}")
++    private int cachePort;
++
++    @Value("${CACHE_DB:0}")
++    private int cacheDb;
++
++    // --- External Redis support ---
++
++    @Bean
++    public JedisConnectionFactory redisConnectionFactory() {
++        RedisStandaloneConfiguration config;
++        if (cacheUrl == null || cacheUrl.isEmpty()) {
++            // Use default localhost
++            config = new RedisStandaloneConfiguration("localhost", cachePort);
++        } else {
++            config = new RedisStandaloneConfiguration(cacheUrl, cachePort);
++        }
++        config.setDatabase(cacheDb);
++        return new JedisConnectionFactory(config);
++    }
++
++    @Bean
++    public RedisTemplate<String, Object> redisTemplate() {
++        RedisTemplate<String, Object> template = new RedisTemplate<>();
++        template.setConnectionFactory(redisConnectionFactory());
++        return template;
++    }
++
+-- 
+2.42.0
